@@ -1,0 +1,123 @@
+%%%% Eksperymenty wykonane dla modelu liniowego - regulacja DMC
+clear; clc; close all;
+
+%% Parametry obiektu
+p.A2 = 430; p.C1 = 0.85; p.a1 = 18; p.a2 = 24; p.tau = 70;
+F1_0 = 55; FD_0 = 10;
+h1_0 = ((F1_0 + FD_0)/p.a1)^2;
+h2_0 = ((F1_0 + FD_0)/p.a2)^2;
+
+%% Parametry regulatora DMC
+Tp_reg   = 10;
+D        = 60;
+N        = 30;
+Nu       = 5;
+lambda   = 0.7;
+limit_u  = [0 110];
+limit_du = [-10 10];
+
+%% Linearyzacja w punkcie pracy
+F2_0 = p.a1*sqrt(h1_0);
+F3_0 = p.a2*sqrt(h2_0);
+
+dFh1_dh1 = -p.a1/(4*p.C1*h1_0^(3/2));
+dFh1_dF1 =  1/(2*p.C1*h1_0);
+dFh1_dFD =  1/(2*p.C1*h1_0);
+dFh2_dh1 =  p.a1/(2*p.A2*sqrt(h1_0));
+dFh2_dh2 = -p.a2/(2*p.A2*sqrt(h2_0));
+
+%% Dyskretyzacja
+Ts   = 0.5;
+Tk   = 3000;
+Nsim = round(Tk/Ts);
+d    = round(p.tau/Ts);
+t    = (0:Nsim)*Ts;
+
+%% Odpowiedź skokowa modelu liniowego
+co = round(Tp_reg/Ts);
+s  = zeros(D,1);
+dh1 = 0; dh2 = 0;
+for k = 1:D*co
+    du  = double(k > d);
+    dh1_new = dh1 + Ts*( dFh1_dh1*dh1 + dFh1_dF1*du );
+    dh2 = dh2 + Ts*( dFh2_dh1*dh1 + dFh2_dh2*dh2 );
+    dh1 = dh1_new;
+    if mod(k, co) == 0, s(k/co) = dh2; end
+end
+
+% figure;
+% stairs((1:D)*Tp_reg, s); grid on; ylabel('s'); xlabel('t [s]');
+% legend('Odpowiedź skokowa - model liniowy','Location','best');
+
+%% Przedstawienie regulacji DMC modelu liniowego
+[ke, ku] = dmc_init(s, N, Nu, D, lambda);
+
+yzad = h2_0*ones(1,Nsim+1);
+yzad(t >= 100)  = 1.2*h2_0;                
+yzad(t >= 1000) = 0.8*h2_0;
+FDc = FD_0*ones(1,Nsim+1);
+FDc(t >= 2000) = 1.5*FD_0;                 
+
+h1c = h1_0*ones(1,Nsim+1);  h2c = h2_0*ones(1,Nsim+1);
+u = F1_0*ones(1,Nsim+1);
+u_akt = F1_0;
+dUp = zeros(D-1,1);
+
+for k = 1:Nsim
+    if mod(k-1, co) == 0                   
+        [u_akt, dUp] = dmc_krok(yzad(k), h2c(k), u_akt, dUp, ke, ku, limit_u, limit_du);
+    end
+    u(k) = u_akt;
+    if k > d 
+        F1 = u(k-d); 
+    else 
+        F1 = F1_0; 
+    end
+
+    h1c(k+1) = h1c(k) + Ts*( dFh1_dh1*(h1c(k)-h1_0) + dFh1_dF1*(F1-F1_0) + dFh1_dFD*(FDc(k)-FD_0) );
+    h2c(k+1) = h2c(k) + Ts*( dFh2_dh1*(h1c(k)-h1_0) + dFh2_dh2*(h2c(k)-h2_0) );
+end
+u(end) = u(end-1);
+
+%% Wykresy
+ip = 1:co:Nsim+1;
+
+figure;
+subplot(2,1,1);
+stairs(t(ip), h2c(ip)); hold on;
+stairs(t(ip), yzad(ip), '--'); hold off;
+grid on; ylabel('h_2 [cm]');
+legend('wyjście h_2','wartość zadana','Location','best');
+
+subplot(2,1,2);
+stairs(t(ip), u(ip)); hold on;
+stairs(t(ip), FDc(ip), '--'); hold off;
+grid on; ylabel('F [cm^3/s]'); xlabel('t [s]');
+legend('sterowanie F_{1in}','zakłócenie F_D','Location','best');
+
+
+%% Macierze regulatora DMC w wersji analitycznej
+function [ke, ku] = dmc_init(s, N, Nu, D, lambda)
+    M = zeros(N, Nu);
+    for i = 1:N
+        for j = 1:min(i, Nu)
+            M(i,j) = s(min(i-j+1, D));
+        end
+    end
+    Mp = zeros(N, D-1);
+    for i = 1:N
+        for j = 1:D-1
+            Mp(i,j) = s(min(i+j, D)) - s(j);
+        end
+    end
+    K  = (M'*M + lambda*eye(Nu)) \ M';
+    ke = sum(K(1,:));
+    ku = K(1,:) * Mp;
+end
+
+function [u, dUp] = dmc_krok(yzad, y, u_prev, dUp, ke, ku, limit_u, limit_du)
+    du = ke*(yzad - y) - ku*dUp;
+    du = min(max(du, limit_du(1)), limit_du(2));
+    u = min(max(u_prev + du, limit_u(1)), limit_u(2));
+    dUp = [u - u_prev; dUp(1:end-1)];
+end
