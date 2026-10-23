@@ -29,6 +29,8 @@ for k = 1:N
     F2 = p.a1*sqrt(h1(k));
     F3 = p.a2*sqrt(h2(k));
 
+    % Równanie różnicowe
+
     h1(k+1) = h1(k) + Ts*(F1 + FD - F2)/(2*p.C1*h1(k));
     h2(k+1) = h2(k) + Ts*(F2 - F3)/p.A2;
 
