@@ -1,12 +1,9 @@
 %%%% Charakterystyka statyczna modelu obiektu
+
 clear; clc; close all;
 
-%% Parametry
-p.A2 = 430; p.C1 = 0.85; p.a1 = 18; p.a2 = 24; p.tau = 70;
-
-% Punkt pracy
-F1_0 = 55;
-FD_0 = 10;
+%% Parametry i punkt pracy
+[model, F1_0, FD_0, h1_0, h2_0] = zad1_obiekt.parametry();
 
 % Zakresy wejść
 F1v = linspace(0, 2*F1_0, 200);      % sterowanie F1
@@ -17,11 +14,8 @@ folder = fullfile(fileparts(mfilename('fullpath')), 'zad1_plots');
 
 %% Stan ustalony:
 
-h1_stat = @(F1,FD) ((F1 + FD)/p.a1).^2;
-h2_stat = @(F1,FD) ((F1 + FD)/p.a2).^2;
-
-h1_0 = h1_stat(F1_0, FD_0);
-h2_0 = h2_stat(F1_0, FD_0);
+h1_stat = @(F1,FD) ((F1 + FD)/model.a1).^2;
+h2_stat = @(F1,FD) ((F1 + FD)/model.a2).^2;
 
 %% Wykres 1: h1, h2 w funkcji F1 dla kilku wartości FD
 FD_list = FD_0 * [0 0.5 1 1.5 2];
@@ -49,7 +43,7 @@ for i = 1:2
 end
 exportgraphics(f, fullfile(folder, 'zad1_char_stat_h_F1.png'), 'Resolution', 300); close(f);
 
-%% Wykres 2: powierzchnia h2(F1, FD)
+%% Wykres charakterystyki statycznej h2(F1in, Fd)
 [F1g, FDg] = meshgrid(F1v, FDv);
 f = figure('Name','Charakterystyka statyczna h2(F1,FD)', 'Color', 'w', 'Visible', 'off');
 surf(F1g, FDg, h2_stat(F1g, FDg), 'EdgeColor', 'none');
