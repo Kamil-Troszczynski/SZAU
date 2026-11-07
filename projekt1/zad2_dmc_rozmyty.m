@@ -21,10 +21,10 @@ limit_u = [0 110];
 limit_du = [-10 10];
 
 % Konwencjonalny DMC - nastawy jak w zadaniu 1
-konw.D = 60; konw.N = 30; konw.Nu = 5; konw.lambda = 0.7;
+konw.D = 80; konw.N = 30; konw.Nu = 5; konw.lambda = 0.1;
 
 % Rozmyty DMC - te same N, Nu, lambda; dłuższe D, bo przy wysokim h2 obiekt jest wolniejszy
-rozm.D = 100; rozm.N = 30; rozm.Nu = 5; rozm.lambda = 0.7;
+rozm.D = 100; rozm.N = 30; rozm.Nu = 5; rozm.lambda = 0.1;
 
 % Początkowe funkcje przynależności regulatora takie same jak w modelu obiektu
 mf_start = dane.mf_popr;
@@ -71,8 +71,8 @@ stairs((1:rozm.D)*Tp_reg, regulator_start.s); grid on; ylabel('s'); xlabel('t [s
 legend(arrayfun(@(c) sprintf('model lokalny h_2 = %.2f cm', c), mf_start.c, 'UniformOutput', false), 'Location', 'best');
 zad1_wykresy.zapisz(f, fullfile(folder, 'zad2_dmc_odp_skokowe_lokalne.png'));
 
-nazwy = {sprintf('DMC konwencjonalny (E = %.1f)', E_k), sprintf('DMC rozmyty (E = %.1f)', E_r)};
-zad1_wykresy.regulacja(t, ip, yzad, FDc, {h2_k, h2_r}, {u_k, u_r}, nazwy, nazwy, fullfile(folder, 'zad2_dmc_konw_vs_rozmyty.png'));
+nazwy = {'DMC konwencjonalny', 'DMC rozmyty'};
+zad1_wykresy.regulacja(t, ip, yzad, FDc, {h2_k, h2_r}, {u_k, u_r}, nazwy, nazwy, fullfile(folder, 'zad2_dmc_konw_vs_rozmyty.png'), 'Porównanie regulatora DMC konwencjonalnego i rozmytego');
 
 %% Strojenie funkcji przynależności regulatora
 warianty = zad2_rozmyte.warianty(numel(mf_start.c), g_lista, szer_lista, dane.h2_min, dane.h2_max);
@@ -103,5 +103,5 @@ fprintf('DMC konwencjonalny:                                        E = %.2f\n',
 hh = linspace(dane.h2_min - 1, dane.h2_max + 1, 500);
 zad2_rozmyte.wykres_mf(hh, {mf_start, mf_stroj}, {['Przed: ' zad2_rozmyte.opis(mf_start)], ['Po: ' zad2_rozmyte.opis(mf_stroj)]}, [1 2], fullfile(folder, 'zad2_dmc_funkcje_przynaleznosci.png'));
 
-nazwy = {sprintf('DMC konwencjonalny (E = %.1f)', E_k), sprintf('DMC rozmyty przed strojeniem (E = %.1f)', E_r), sprintf('DMC rozmyty po strojeniu (E = %.1f)', E_s)};
-zad1_wykresy.regulacja(t, ip, yzad, FDc, {h2_k, h2_r, h2_s}, {u_k, u_r, u_s}, nazwy, nazwy, fullfile(folder, 'zad2_dmc_przed_po_strojeniu.png'));
+nazwy = {'DMC konwencjonalny', 'DMC rozmyty przed strojeniem', 'DMC rozmyty po strojeniu'};
+zad1_wykresy.regulacja(t, ip, yzad, FDc, {h2_k, h2_r, h2_s}, {u_k, u_r, u_s}, nazwy, nazwy, fullfile(folder, 'zad2_dmc_przed_po_strojeniu.png'), 'Regulator DMC rozmyty przed i po strojeniu funkcji przynależności');

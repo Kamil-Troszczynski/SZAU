@@ -117,7 +117,10 @@ classdef zad2_rozmyte
             for i = 1:numel(mf_lista)
                 subplot(uklad(1), uklad(2), i);
                 plot(hh, zad2_rozmyte.wartosci(hh, mf_lista{i})); grid on;
-                xlabel('h_2 [cm]'); ylabel('\mu'); title(tytuly{i});
+                xlabel('h_2 [cm]'); ylabel('\mu'); title(tytuly{i}, 'FontWeight', 'normal', 'FontSize', 9);
+            end
+            if isequal(uklad, [2 2])
+                sgtitle('Funkcje przynależności dla różnej liczby modeli lokalnych', 'FontWeight', 'normal');
             end
             zad1_wykresy.zapisz(f, plik);
         end

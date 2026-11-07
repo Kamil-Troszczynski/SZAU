@@ -52,13 +52,13 @@ skoki_FD = [-0.5 0.5];                       % względem FD_0
 [F1_s, FD_s, opis_s] = zad1_scenariusze.skoki_pojedyncze(t, F1_0, FD_0, skoki_F1, skoki_FD, 100);
 nS = numel(F1_s);
 
-% b) skoki F1in w dwóch miejscach, wzrost i spadek - do wykresów (jak w zadaniu 1)
-F1_dw = zad1_scenariusze.wzrost_spadek(t, F1_0);
-FD_dw = FD_0*ones(size(t));
+% b) przebiegi sterowania F1in i zakłócenia FD takie same jak w zadaniu 1 - do wykresów
+F1c = zad1_scenariusze.przebieg_F1(t, F1_0);
+FDc = zad1_scenariusze.przebieg_FD(t, FD_0);
 
 % Odpowiedzi modelu nieliniowego - punkt odniesienia
 h2n_s = cellfun(@(F1, FD) zad1_obiekt.sym_nieliniowy(model, F1, FD, Ts, d, F1_0, h1_0, h2_0), F1_s, FD_s, 'UniformOutput', false);
-h2n_dw = cellfun(@(F1) zad1_obiekt.sym_nieliniowy(model, F1, FD_dw, Ts, d, F1_0, h1_0, h2_0), F1_dw, 'UniformOutput', false);
+h2n_c = zad1_obiekt.sym_nieliniowy(model, F1c, FDc, Ts, d, F1_0, h1_0, h2_0);
 
 %% Porównanie modeli rozmytych z modelem liniowym i nieliniowym
 nM = nL + 1;
@@ -81,11 +81,24 @@ for is = 1:nS
 end
 fprintf('%-10s', 'suma'); fprintf('%12.2f', sum(E, 1)); fprintf('\n');
 
-h2_dw = cell(1, 2);
-for ik = 1:2
-    h2_dw{ik} = [h2n_dw(ik), cellfun(@(modele_lok, mf) zad2_rozmyte.sym_ts(modele_lok, mf, F1_dw{ik}, FD_dw, Ts, d, F1_0, h1_0, h2_0), modele_lok_lista, mf_all, 'UniformOutput', false)];
-end
-zad1_wykresy.wzrost_spadek(t, F1_dw, F1_0, h2_dw, [{'nieliniowy'}, nazwy], [{'k', '--'}, repmat({''}, 1, nL)], fullfile(folder, 'zad2_porownanie_modeli.png'));
+h2_c = [{h2n_c}, cellfun(@(modele_lok, mf) zad2_rozmyte.sym_ts(modele_lok, mf, F1c, FDc, Ts, d, F1_0, h1_0, h2_0), modele_lok_lista, mf_all, 'UniformOutput', false)];
+E_c = cellfun(@(h2m) sum((h2m - h2n_c).^2), h2_c(2:end));
+
+fprintf('\nBłąd modeli względem modelu nieliniowego dla przebiegów z zadania 1\n');
+fprintf('%-10s', ''); fprintf('%12s', nazwy{:}); fprintf('\n');
+fprintf('%-10s', 'E'); fprintf('%12.2f', E_c); fprintf('\n');
+
+% h2_c = {nieliniowy, liniowy, TS dla kolejnych L z L_lista}
+nazwy_ts = arrayfun(@(L) sprintf('Model rozmyty (L = %d)', L), L_lista, 'UniformOutput', false);
+
+% Wszystkie modele rozmyte
+zad1_wykresy.modele(t, F1c, FDc, h2_c(3:end), nazwy_ts, repmat({''}, 1, nL), ...
+    fullfile(folder, 'zad2_porownanie_modeli_rozmytych.png'), 'Porównanie modeli rozmytych o różnej liczbie modeli lokalnych');
+
+% Model nieliniowy, liniowy i wybrany model rozmyty
+i_wyb = 2 + find(L_lista == L_wyb);
+zad1_wykresy.modele(t, F1c, FDc, h2_c([1 2 i_wyb]), [{'Model nieliniowy', 'Model liniowy'}, nazwy_ts(L_lista == L_wyb)], {'k', '--', ''}, ...
+    fullfile(folder, 'zad2_porownanie_lin_nielin_rozmyty.png'), 'Porównanie modelu rozmytego z modelem liniowym i nieliniowym');
 
 %% Poprawa wybranego modelu przez zmianę kształtu funkcji przynależności
 mf_wyb = mf_L{L_lista == L_wyb};
@@ -117,13 +130,13 @@ zad2_rozmyte.wykres_mf(hh, {mf_wyb, mf_popr}, {['Przed: ' zad2_rozmyte.opis(mf_w
 % Odpowiedzi modelu przed i po poprawie
 modele_lok_wyb  = zad2_rozmyte.modele_lokalne(model, mf_wyb.c);
 modele_lok_popr = zad2_rozmyte.modele_lokalne(model, mf_popr.c);
-for ik = 1:2
-    h2_dw{ik} = {h2n_dw{ik}, ...
-        zad2_rozmyte.sym_ts(model_zlinearyzowany,  mf_lin,  F1_dw{ik}, FD_dw, Ts, d, F1_0, h1_0, h2_0), ...
-        zad2_rozmyte.sym_ts(modele_lok_wyb,  mf_wyb,  F1_dw{ik}, FD_dw, Ts, d, F1_0, h1_0, h2_0), ...
-        zad2_rozmyte.sym_ts(modele_lok_popr, mf_popr, F1_dw{ik}, FD_dw, Ts, d, F1_0, h1_0, h2_0)};
-end
-zad1_wykresy.wzrost_spadek(t, F1_dw, F1_0, h2_dw, {'nieliniowy', 'liniowy', sprintf('TS%d przed poprawą', L_wyb), sprintf('TS%d po poprawie', L_wyb)}, {'k', '--', '', ''}, fullfile(folder, 'zad2_model_przed_po_poprawie.png'));
+h2_c = {h2n_c, ...
+    zad2_rozmyte.sym_ts(modele_lok_wyb,  mf_wyb,  F1c, FDc, Ts, d, F1_0, h1_0, h2_0), ...
+    zad2_rozmyte.sym_ts(modele_lok_popr, mf_popr, F1c, FDc, Ts, d, F1_0, h1_0, h2_0)};
+nazwy_wyk = {'Model nieliniowy', sprintf('Model rozmyty (L = %d) przed poprawą', L_wyb), sprintf('Model rozmyty (L = %d) po poprawie', L_wyb)};
+jasnoniebieski = [0.3010 0.7450 0.9330];
+zad1_wykresy.modele(t, F1c, FDc, h2_c, nazwy_wyk, {'k', '', jasnoniebieski}, fullfile(folder, 'zad2_model_przed_po_poprawie.png'), ...
+    'Model rozmyty przed i po poprawie funkcji przynależności');
 
 %% Zapis funkcji przynależności wybranego modelu
 save(plik_modelu, 'mf_wyb', 'mf_popr', 'h2_min', 'h2_max');
