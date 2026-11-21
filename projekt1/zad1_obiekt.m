@@ -12,6 +12,8 @@ classdef zad1_obiekt
 
         % Model liniowy
         function model_zlinearyzowany = linearyzacja(model, h2r)
+            model_zlinearyzowany.a2 = model.a2;
+            model_zlinearyzowany.F1_0 = model.F1_0; model_zlinearyzowany.FD_0 = model.FD_0;
             model_zlinearyzowany.h2 = h2r;
             model_zlinearyzowany.F = model.a2*sqrt(h2r);
             model_zlinearyzowany.h1 = (model_zlinearyzowany.F/model.a1)^2;
@@ -23,7 +25,7 @@ classdef zad1_obiekt
 
         % Wzmocnienie statyczne modelu liniowego
         function K = wzmocnienie(model_zlinearyzowany)
-            K = (model_zlinearyzowany.b/(-model_zlinearyzowany.d11))*(model_zlinearyzowany.d21/(-model_zlinearyzowany.d22));
+            K = 2*(model_zlinearyzowany.F1_0 + model_zlinearyzowany.FD_0) / (model_zlinearyzowany.a2 ^ 2);
         end
 
         % Jeden krok metody Eulera dla obiektu nieliniowego

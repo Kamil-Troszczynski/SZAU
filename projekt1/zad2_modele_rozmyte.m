@@ -42,7 +42,7 @@ mf_lin = zad2_rozmyte.mf_liniowy(h2_0);
 nL = numel(L_lista);
 mf_L = arrayfun(@(L) zad2_rozmyte.utworz_mf(L, 'trojkatne', 1, 0, h2_min, h2_max), L_lista, 'UniformOutput', false);
 
-hh = linspace(h2_min - 1, h2_max + 1, 500);
+hh = linspace(h2_min, h2_max, 500);
 zad2_rozmyte.wykres_mf(hh, mf_L, arrayfun(@(L) sprintf('%d modele lokalne', L), L_lista, 'UniformOutput', false), [2 2], fullfile(folder, 'zad2_funkcje_przynaleznosci.png'));
 
 %% Scenariusze testowe
