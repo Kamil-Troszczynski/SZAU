@@ -100,7 +100,7 @@ fprintf('Po strojeniu:     %-40s E = %.2f\n', zad2_rozmyte.opis(mf_stroj), E_s);
 fprintf('DMC konwencjonalny:                                        E = %.2f\n', E_k);
 
 % Funkcje przynależności regulatora przed i po strojeniu
-hh = linspace(dane.h2_min - 1, dane.h2_max + 1, 500);
+hh = linspace(dane.h2_min, dane.h2_max, 500);
 zad2_rozmyte.wykres_mf(hh, {mf_start, mf_stroj}, {['Przed: ' zad2_rozmyte.opis(mf_start)], ['Po: ' zad2_rozmyte.opis(mf_stroj)]}, [1 2], fullfile(folder, 'zad2_dmc_funkcje_przynaleznosci.png'));
 
 nazwy = {'DMC konwencjonalny', 'DMC rozmyty przed strojeniem', 'DMC rozmyty po strojeniu'};

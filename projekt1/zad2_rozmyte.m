@@ -16,11 +16,20 @@ classdef zad2_rozmyte
             mf = struct('L', 1, 'typ', 'trojkatne', 'g', 1, 'szer', 0, 'c', h2_0);
         end
 
+        % Znormalizowane stopnie przynależności (wagi modeli lokalnych), sumują się do 1
         function w = przynaleznosc(y, mf)
+            c = mf.c;
+            if numel(c) == 1, w = 1; return; end
+            y = min(max(y, c(1)), c(end));  % poza zakresem wagi jak na krańcu przedziału
+            mu = zad2_rozmyte.surowe(y, mf);
+            w = mu/sum(mu);
+        end
+
+        % Surowe (nieznormalizowane) wartości funkcji przynależności mu_i(y)
+        function w = surowe(y, mf)
             c = mf.c;
             L = numel(c);
             if L == 1, w = 1; return; end
-            y = min(max(y, c(1)), c(end));  % poza zakresem działa model skrajny
             switch mf.typ
                 case 'trojkatne'
                     w = zeros(1, L);
@@ -41,13 +50,13 @@ classdef zad2_rozmyte
                 otherwise
                     error('Nieznany typ funkcji przynależności: %s', mf.typ);
             end
-            w = w/sum(w);
         end
 
+        % Surowe funkcje przynależności na siatce hh (do wykresów)
         function W = wartosci(hh, mf)
             W = zeros(numel(hh), numel(mf.c));
             for k = 1:numel(hh)
-                W(k,:) = zad2_rozmyte.przynaleznosc(hh(k), mf);
+                W(k,:) = zad2_rozmyte.surowe(hh(k), mf);
             end
         end
 

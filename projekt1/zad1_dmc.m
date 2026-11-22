@@ -19,6 +19,14 @@ classdef zad1_dmc
 
         % Współczynniki ke, ku regulatora DMC w wersji analitycznej
         function [ke, ku] = wspolczynniki(s, N, Nu, D, lambda)
+            [M, Mp] = zad1_dmc.macierze(s, N, Nu, D);
+            K  = (M'*M + lambda*eye(Nu)) \ M';
+            ke = sum(K(1,:));
+            ku = K(1,:) * Mp;
+        end
+
+        % Macierz dynamiczna M i macierz Mp (odpowiedź swobodna) z odpowiedzi skokowej s
+        function [M, Mp] = macierze(s, N, Nu, D)
             M = zeros(N, Nu);
             for i = 1:N
                 for j = 1:min(i, Nu)
@@ -31,9 +39,6 @@ classdef zad1_dmc
                     Mp(i,j) = s(min(i+j, D)) - s(j);
                 end
             end
-            K  = (M'*M + lambda*eye(Nu)) \ M';
-            ke = sum(K(1,:));
-            ku = K(1,:) * Mp;
         end
 
         % Projektowanie regulatora dla modeli lokalnych modele_lok. Dla jednego modelu wagi = 1;
